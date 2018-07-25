@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -17,6 +18,9 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 public class HelperFunctions {
 
@@ -62,7 +66,7 @@ public class HelperFunctions {
                 InputStream inputStream = urlConnection.getInputStream();
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
                 String stream;
-                while(stream = bufferedReader.readLine()!= null){
+                while((stream = bufferedReader.readLine())!= null){
                     builder.append(stream);
                 }
                 Log.d("JSON","JSON: " + builder.toString());
@@ -79,6 +83,118 @@ public class HelperFunctions {
 
         return null;
     }
+
+    public boolean seperateJSON(JSONObject jsonObject) throws JSONException{
+        if (jsonObject != null) {
+            JSONObject coordinates = jsonObject.getJSONObject("coord");
+            longitude = coordinates.getDouble("lon");
+            latitude = coordinates.getDouble("lat");
+
+            JSONObject sys = jsonObject.getJSONObject("sys");
+            country = sys.getString("country");
+            sunrise = sys.getInt("sunrise");
+            sunset = sys.getInt("sunset");
+
+            JSONArray weatherArray = jsonObject.getJSONArray("weather");
+            if (weatherArray.length() > 0) {
+                JSONObject weather = weatherArray.getJSONObject(0);
+                id = weather.getInt("id");
+                main = weather.getString("main");
+                description = weather.getString("description");
+                icon = weather.getString("icon");
+            }
+
+            JSONObject main = jsonObject.getJSONObject("main");
+            temperature = main.getDouble("temp");
+            min_temp = main.getDouble("temp_min");
+            max_temp = main.getDouble("temp_max");
+            pressure = main.getDouble("pressure");
+            humidity = main.getDouble("humidity");
+
+            JSONObject wind = jsonObject.getJSONObject("wind");
+            speed = wind.getDouble("speed");
+
+            visibility = jsonObject.getJSONObject("clouds").getInt("all");
+
+            name = jsonObject.getString("name");
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void updateScreen(){
+
+        id = id / 100;
+        if(icon.contains("d")){
+            switch(id){
+
+                case 2:
+                    imageCondition.setImageResource(R.drawable.thunderstorms);
+                    break;
+                case 3:
+                    imageCondition.setImageResource(R.drawable.slight_drizzle);
+                    break;
+                case 5:
+                    imageCondition.setImageResource(R.drawable.drizzle);
+                    break;
+                case 6:
+                    imageCondition.setImageResource(R.drawable.snow);
+                    break;
+                case 7:
+                    imageCondition.setImageResource(R.drawable.haze);
+                    break;
+                case 8:
+                    imageCondition.setImageResource(R.drawable.sunny);
+                    break;
+            }
+
+        }else {
+
+            switch(id){
+
+                case 2:
+                    imageCondition.setImageResource(R.drawable.night_thunderstorms);
+                    break;
+                case 3:
+                    imageCondition.setImageResource(R.drawable.night_drizzle);
+                    break;
+                case 5:
+                    imageCondition.setImageResource(R.drawable.night_drizzle);
+                    break;
+                case 6:
+                    imageCondition.setImageResource(R.drawable.snow);
+                    break;
+                case 7:
+                    imageCondition.setImageResource(R.drawable.night_cloudy);
+                    break;
+                case 8:
+                    imageCondition.setImageResource(R.drawable.moon);
+                    break;
+            }
+
+        }
+
+        txtCity.setText(name);
+        txtTemp.setText(temperature + "F");
+        txtDescription.setText(description);
+        txtMinTemp.setText(min_temp + "F");
+        txtMaxTemp.setText(max_temp + "F");
+        txtWindSpeed.setText(speed + "mph");
+        txtHumidity.setText(humidity + "%");
+        txtPressure.setText(pressure + "HPA");
+        txtVisibility.setText(visibility + "%");
+        long time = sunrise * (long)1000;
+        Date date = new Date(time);
+        SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm:ss a yyyy");
+        format.setTimeZone(TimeZone.getTimeZone("PST"));
+        txtSunrise.setText("" + format.format(date));
+
+        time = sunset * (long) 1000;
+        date = new Date(time);
+        txtSunset.setText("" + format.format(date));
+    }
+
 }
 
 
